@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { verifyDiff } from "./index.js";
+import { verifyDiff } from "./index";
 
 /**
  * codeceipt-engine — reads a unified diff on stdin, prints a JSON Verdict on stdout.

@@ -1,4 +1,4 @@
-import { parseDiff, addedLineCount } from "./diff.js";
+import { parseDiff, addedLineCount } from "./diff";
 import {
   type CriteriaContext,
   noHardcodedSecrets,
@@ -6,11 +6,11 @@ import {
   readSetCoverage,
   testsExecute,
   earsWellFormed,
-} from "./criteria.js";
-import { ENGINE_VERSION, type CriterionResult, type CriterionStatus, type Verdict } from "./types.js";
+} from "./criteria";
+import { ENGINE_VERSION, type CriterionResult, type CriterionStatus, type Verdict } from "./types";
 
-export * from "./types.js";
-export { parseDiff } from "./diff.js";
+export * from "./types";
+export { parseDiff } from "./diff";
 
 export interface VerifyOptions extends CriteriaContext {}
 

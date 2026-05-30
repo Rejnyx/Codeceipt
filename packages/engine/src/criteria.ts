@@ -1,5 +1,5 @@
-import type { CriterionResult } from "./types.js";
-import { type DiffFile, addedLineCount } from "./diff.js";
+import type { CriterionResult } from "./types";
+import { type DiffFile, addedLineCount } from "./diff";
 
 export interface CriteriaContext {
   /** When set, shell/file_predicate run against a real checked-out tree. */
@@ -21,8 +21,8 @@ const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
 const SENSITIVE_ENV = /(TOKEN|SECRET|KEY|PASSWORD|CREDENTIAL|KV_|GITHUB_|OPENAI|OPENROUTER|AWS_|VERCEL|STRIPE)/i;
 
 /** Strip secret-bearing vars so an untrusted repo's test script can't read them. */
-function scrubEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const out: NodeJS.ProcessEnv = {};
+function scrubEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+  const out: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(env)) if (!SENSITIVE_ENV.test(k)) out[k] = v;
   return out;
 }
@@ -123,7 +123,7 @@ export async function testsExecute(
       cwd: ctx.workingDir,
       shell: false,
       stdio: "ignore",
-      env: scrubEnv(process.env),
+      env: scrubEnv(process.env) as NodeJS.ProcessEnv,
       timeout: 120_000,
       killSignal: "SIGKILL",
     });

@@ -41,10 +41,15 @@ PR URL / diff ─▶ /api/scan ─▶ lib/github         (fetch PR diff)
 
 ```bash
 pnpm dev         # local dev (http://localhost:3000)
-pnpm build       # production build
-pnpm typecheck   # tsc --noEmit
+pnpm build       # production build (web; Turbopack transpiles the engine src)
+pnpm typecheck   # web tsc --noEmit + engine typecheck
 pnpm start       # serve production build
+pnpm engine      # run the engine CLI (tsx): diff on stdin -> JSON verdict
 ```
+
+Note: the web consumes `@codeceipt/engine` from **source** via `transpilePackages`
+(no build step); the engine CLI runs via `tsx`. Engine imports are extensionless
+(bundler resolution) — a published Action binary would bundle (tsup) to add `.js`.
 
 ## Env vars
 
