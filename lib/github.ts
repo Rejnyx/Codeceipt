@@ -1,6 +1,24 @@
+import { Readable } from "node:stream";
+import { createGunzip } from "node:zlib";
+import { extract as tarExtract } from "tar-stream";
+
 const ALLOWED_HOSTS = new Set(["github.com", "www.github.com"]);
 const SEGMENT = /^[A-Za-z0-9_.-]+$/;
 const MAX_DIFF_BYTES = 2_000_000;
+
+// Whole-repo scan budgets. The engine refuses any diff over its own cap, so the
+// synthesized "every text file as added" diff is built up to a budget safely
+// under it. Always honest about coverage when a cap is hit.
+const REPO_DIFF_BUDGET = 1_900_000; // ceiling for the synthesized diff (< engine cap)
+const REPO_PER_FILE_BYTES = 256 * 1024; // skip individual files larger than this
+const REPO_MAX_ARCHIVE_BYTES = 100 * 1024 * 1024; // refuse absurdly large tarballs
+const SPEC_NAMES = new Set(["codeceipt.yml", "codeceipt.yaml", ".github/codeceipt.yml"]);
+const BINARY_EXT = new Set([
+  "png", "jpg", "jpeg", "gif", "webp", "ico", "bmp", "pdf", "woff", "woff2", "ttf",
+  "otf", "eot", "mp4", "mov", "webm", "mp3", "wav", "ogg", "flac", "aac", "zip", "gz",
+  "tgz", "bz2", "xz", "tar", "rar", "7z", "exe", "dll", "so", "dylib", "bin", "wasm",
+  "class", "jar", "pyc", "pyo", "node", "icns", "ds_store", "heic", "avif", "psd",
+]);
 
 // GitHub serves the diff media type as a 302 to one of these hosts. We follow
 // the redirect manually and only to a known GitHub-owned host — this keeps the
@@ -139,33 +157,126 @@ export async function fetchPrDiff(prUrl: string): Promise<{ diff: string; repo: 
   }
 }
 
-/** Best-effort fetch of codeceipt.yml/.yaml from a repo's default branch. */
-async function fetchSpecFile(owner: string, repo: string, ref: string): Promise<string | undefined> {
-  for (const name of ["codeceipt.yml", "codeceipt.yaml", ".github/codeceipt.yml"]) {
-    const { signal, done } = withTimeout(10_000);
-    try {
-      const res = await fetchFollowingGithub(
-        `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${name}?ref=${encodeURIComponent(ref)}`,
-        authHeaders("application/vnd.github.raw"),
-        signal,
-      );
-      if (res.ok) {
-        const text = await res.text();
-        if (text.trim()) return text;
-      }
-    } catch {
-      /* try the next candidate */
-    } finally {
-      done();
-    }
+/** True if a path almost certainly points at a binary/asset we shouldn't scan as text. */
+export function isProbablyBinaryPath(path: string): boolean {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".min.js") || lower.endsWith(".min.css") || lower.endsWith(".map")) {
+    return true;
   }
-  return undefined;
+  const dot = lower.lastIndexOf(".");
+  return dot !== -1 && BINARY_EXT.has(lower.slice(dot + 1));
+}
+
+/** Synthesize the unified-diff hunk for a file as if every line were newly added. */
+export function buildAddedFileDiff(path: string, content: string): string {
+  const lines = content.split("\n");
+  // A trailing newline leaves a final "" element; drop it so we don't emit a phantom line.
+  if (lines.length && lines[lines.length - 1] === "") lines.pop();
+  const header =
+    `diff --git a/${path} b/${path}\n` +
+    "new file mode 100644\n" +
+    "--- /dev/null\n" +
+    `+++ b/${path}\n` +
+    `@@ -0,0 +1,${lines.length} @@\n`;
+  if (!lines.length) return header;
+  return header + lines.map((l) => "+" + l).join("\n") + "\n";
+}
+
+/** Heuristic: a NUL byte in the head of a buffer means it's binary, not text. */
+function looksBinary(buf: Buffer): boolean {
+  const n = Math.min(buf.length, 8000);
+  for (let i = 0; i < n; i++) if (buf[i] === 0) return true;
+  return false;
+}
+
+/** Strip the "owner-repo-sha/" prefix GitHub puts on every tarball entry. */
+function stripTopDir(name: string): string {
+  const i = name.indexOf("/");
+  return i === -1 ? "" : name.slice(i + 1);
+}
+
+interface RepoTarballResult {
+  diff: string;
+  spec?: string;
+  scannedFiles: number;
+  totalFiles: number;
+  skipped: number; // binary/large files not scanned
+  capped: boolean; // hit REPO_DIFF_BUDGET before finishing the tree
 }
 
 /**
- * Scan a whole repo: take the default branch's latest commit as the delivered
- * diff and pull codeceipt.yml if present. Honest about scope — the web sees the
- * latest commit; full-tree test execution is the GitHub Action's job.
+ * Walk a gzipped repo tarball, synthesizing an "every text file as added" diff up
+ * to REPO_DIFF_BUDGET so the engine scans the whole tree (secrets, declared
+ * criteria) in one pass. Always captures codeceipt.yml — even past the budget —
+ * since it drives the declared criteria. Skips binaries and oversized files.
+ */
+function readRepoTarball(archive: Buffer): Promise<RepoTarballResult> {
+  return new Promise((resolve, reject) => {
+    const extract = tarExtract();
+    let diff = "";
+    let spec: string | undefined;
+    let scannedFiles = 0;
+    let totalFiles = 0;
+    let skipped = 0;
+    let capped = false;
+
+    const drain = (stream: Readable, next: () => void) => {
+      stream.resume();
+      stream.on("end", next);
+    };
+
+    extract.on("entry", (header, stream, next) => {
+      if (header.type !== "file") return drain(stream, next);
+      const path = stripTopDir(header.name);
+      if (!path) return drain(stream, next);
+      totalFiles++;
+
+      const isSpec = SPEC_NAMES.has(path);
+      const skippable =
+        capped || (header.size ?? 0) > REPO_PER_FILE_BYTES || isProbablyBinaryPath(path);
+      // A spec file's bytes must be read even past budget; otherwise skip cheaply.
+      if (!isSpec && skippable) {
+        if (!capped) skipped++;
+        return drain(stream, next);
+      }
+
+      const chunks: Buffer[] = [];
+      stream.on("data", (c: Buffer) => chunks.push(c));
+      stream.on("error", reject);
+      stream.on("end", () => {
+        const buf = Buffer.concat(chunks);
+        if (isSpec && spec === undefined) spec = buf.toString("utf8");
+        if (capped) return next();
+        if (looksBinary(buf)) {
+          if (!isSpec) skipped++;
+          return next();
+        }
+        const piece = buildAddedFileDiff(path, buf.toString("utf8"));
+        if (diff.length + piece.length <= REPO_DIFF_BUDGET) {
+          diff += piece;
+          scannedFiles++;
+        } else {
+          capped = true; // tree is bigger than the engine cap — stop scanning, stay honest
+        }
+        next();
+      });
+    });
+
+    extract.on("finish", () =>
+      resolve({ diff, spec, scannedFiles, totalFiles, skipped, capped }),
+    );
+    extract.on("error", reject);
+
+    const gunzip = createGunzip();
+    gunzip.on("error", reject);
+    Readable.from(archive).pipe(gunzip).pipe(extract);
+  });
+}
+
+/**
+ * Scan a whole repo: download the default branch as a tarball (one request) and
+ * verify every text file's contents against the engine. Honest about scope — the
+ * web scans up to a 2MB budget; full-tree TEST EXECUTION is the Action's job.
  */
 export async function fetchRepoScan(repoUrl: string): Promise<ResolvedTarget> {
   const parsed = parseRepoUrl(repoUrl);
@@ -173,7 +284,7 @@ export async function fetchRepoScan(repoUrl: string): Promise<ResolvedTarget> {
   const { owner, repo } = parsed;
 
   // 1) default branch
-  const meta = await (async () => {
+  const branch = await (async () => {
     const { signal, done } = withTimeout(10_000);
     try {
       const res = await fetchFollowingGithub(
@@ -182,39 +293,46 @@ export async function fetchRepoScan(repoUrl: string): Promise<ResolvedTarget> {
         signal,
       );
       if (!res.ok) throw new Error(`GitHub returned ${res.status} for the repository.`);
-      return (await res.json()) as { default_branch?: string };
+      const meta = (await res.json()) as { default_branch?: string };
+      return meta.default_branch ?? "main";
     } finally {
       done();
     }
   })();
-  const branch = meta.default_branch ?? "main";
 
-  // 2) latest commit diff on that branch
-  const { signal, done } = withTimeout(15_000);
-  let diff: string;
+  // 2) whole tree as a tarball — one request, scanned locally
+  const { signal, done } = withTimeout(30_000);
+  let archive: Buffer;
   try {
     const res = await fetchFollowingGithub(
-      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(branch)}`,
-      authHeaders("application/vnd.github.v3.diff"),
+      `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/tarball/${encodeURIComponent(branch)}`,
+      authHeaders("application/vnd.github+json"),
       signal,
     );
-    if (!res.ok) throw new Error(`GitHub returned ${res.status} fetching the branch diff.`);
-    diff = capDiff(await res.text(), res.headers.get("content-length"));
+    if (!res.ok) throw new Error(`GitHub returned ${res.status} fetching the repository archive.`);
+    if (Number(res.headers.get("content-length") ?? 0) > REPO_MAX_ARCHIVE_BYTES) {
+      throw new Error("Repository is too large to scan from the web — run the GitHub Action instead.");
+    }
+    archive = Buffer.from(await res.arrayBuffer());
+    if (archive.length > REPO_MAX_ARCHIVE_BYTES) {
+      throw new Error("Repository is too large to scan from the web — run the GitHub Action instead.");
+    }
   } finally {
     done();
   }
 
-  // 3) declared criteria, if the repo ships them
-  const spec = await fetchSpecFile(owner, repo, branch);
+  const t = await readRepoTarball(archive);
+  if (!t.diff) throw new Error("No scannable text files found in the repository.");
 
-  return {
-    diff,
-    repo: `${owner}/${repo}`,
-    url: repoUrl,
-    kind: "repo",
-    spec,
-    env: `static · repo scan · latest commit on ${branch}${spec ? " · codeceipt.yml found" : ""}`,
-  };
+  const coverage = t.capped
+    ? `scanned ${t.scannedFiles}/${t.totalFiles} files (2MB cap — run the Action for the full tree)`
+    : `scanned all ${t.scannedFiles} text files`;
+  const env =
+    `static · repo scan · ${branch} · ${coverage}` +
+    (t.skipped ? ` · ${t.skipped} binary/large skipped` : "") +
+    (t.spec ? " · codeceipt.yml found" : "");
+
+  return { diff: t.diff, repo: `${owner}/${repo}`, url: repoUrl, kind: "repo", spec: t.spec, env };
 }
 
 /**
