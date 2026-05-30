@@ -156,6 +156,22 @@ One sentence on stage: *"Agents say done and nobody checks they didn't lie. This
 
 Sharpest dividing line: **the check is cheap/free; the issued, verifiable client certificate is the paid thing** — that's what earns the freelancer trust (and a higher rate). Numbers are estimates; the real level comes from who actually pays. *(The enterprise/compliance tiers in earlier drafts are aspirational, not near-term — kept out of this SSOT on purpose.)*
 
+### Paywall boundary (decided 2026-05-30) — what you can and can't gate
+
+The recurring question: "should the GitHub Action be behind the paywall, so users don't check every PR on the web?" **No — and you structurally can't.** The engine is Apache-2.0; the Action runs it in the user's *own* runner. Anyone can `uses: Rejnyx/Codeceipt@v1` (or fork / run the CLI) and get a verdict + PR comment for free. Gating that would destroy the "you don't even have to trust us" position **and** the distribution flywheel (badges on others' repos), and people would just fork around it. **The Action is the distribution engine — keep it free.**
+
+Gate the **hosted service around the result**, not the verification:
+
+| Free (engine + Action, self-run) | Paid (hosted) |
+|---|---|
+| Verdict as a PR comment / Check Run | **Hosted, shareable receipt URL** (`/r/<id>`) to send a client |
+| Public repos | **Private-repo** receipts (GitHub OAuth) |
+| Local / CI output | **History + dashboard** of all receipts |
+| README badge | **PDF export + agency branding** |
+| | **Org account**, many projects, SSO |
+
+The natural enforcement point already exists: **`/api/ingest` (publishing a hosted receipt from the Action) requires `CODECEIPT_INGEST_TOKEN`.** So the Action runs free, but *publishing a hosted, client-facing certificate* needs a valid token = a paid account. Freelancer doesn't pay to learn pass/fail — they pay for the **public certificate that raises their trust with the client.** Billing code is post-event; this is the boundary it will enforce.
+
 ---
 
 ## 9. Market + honest outcomes

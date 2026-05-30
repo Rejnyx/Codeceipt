@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { verifyDiff } from "./index";
+import { runInit, formatInitResult } from "./init";
 
 /**
  * codeceipt-engine — reads a unified diff on stdin, prints a JSON Verdict on stdout.
@@ -12,6 +13,18 @@ import { verifyDiff } from "./index";
  */
 async function main() {
   const args = process.argv.slice(2);
+
+  // `codeceipt init` — the installer: scaffold the workflow + a starter spec
+  // into the current repo so the verification runs in its own CI.
+  if (args[0] === "init") {
+    const res = runInit(process.cwd(), {
+      force: args.includes("--force"),
+      dryRun: args.includes("--dry-run"),
+    });
+    console.log(formatInitResult(res));
+    return;
+  }
+
   const workingDirFlag = args.indexOf("--working-dir");
   const workingDir = workingDirFlag >= 0 ? args[workingDirFlag + 1] : undefined;
 

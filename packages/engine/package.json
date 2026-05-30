@@ -10,7 +10,8 @@
     ".": "./src/index.ts"
   },
   "bin": {
-    "codeceipt-engine": "./dist/cli.js"
+    "codeceipt-engine": "./dist/cli.js",
+    "codeceipt": "./dist/cli.js"
   },
   "files": [
     "dist",

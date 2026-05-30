@@ -4,6 +4,7 @@ import { useState } from "react";
 import { buildFixPrompt } from "@codeceipt/engine";
 import { Ic, StatusIcon } from "./icons";
 import type { Receipt, CriterionResult, VerdictLabel } from "@/lib/types";
+import { LeadForm } from "@/components/lead-form";
 
 /* ---- verdict meta ---- */
 type Meta = { cls: string; color: string; bg: string; line: string; icon: string; word: string };
@@ -472,6 +473,13 @@ export function ReceiptDoc({ data }: { data: Receipt }) {
 
       {/* upgrade-to-Action panel (partial only) */}
       <UpgradePanel receipt={data} />
+
+      {/* lead capture — a broken or unproven hand-off is a warm lead */}
+      {data.label !== "VERIFIED" && (
+        <div style={{ marginTop: 16 }}>
+          <LeadForm receiptId={data.id} repo={data.repo} label={data.label} />
+        </div>
+      )}
 
       {/* actions */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 16, alignItems: "center" }}>
