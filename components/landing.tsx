@@ -7,6 +7,8 @@ import { verdictMeta } from "./receipt-doc";
 import { allSamples, getSampleReceipt, SAMPLE_IDS } from "@/lib/sample-receipts";
 import type { Receipt } from "@/lib/types";
 
+const REPO_URL = "https://github.com/Rejnyx/Codeceipt";
+
 /* ---------- small helpers ---------- */
 function CountUp({ to, suffix = "", decimals = 0, sep = true }: { to: number; suffix?: string; decimals?: number; sep?: boolean }) {
   const [val, setVal] = useState(0);
@@ -260,7 +262,7 @@ function PasteView({ onBack }: { onBack: () => void }) {
                   value={url}
                   onChange={(e) => { setUrl(e.target.value); setErr(""); }}
                   onKeyDown={(e) => e.key === "Enter" && submit()}
-                  placeholder="https://github.com/owner/repo/pull/42"
+                  placeholder="github.com/owner/repo/pull/42  ·  or a repo URL"
                   spellCheck={false}
                   style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text-hi)", fontSize: 14.5, padding: "8px 2px", fontFamily: "var(--mono)" }}
                 />
@@ -268,7 +270,7 @@ function PasteView({ onBack }: { onBack: () => void }) {
               </div>
               <div style={{ minHeight: 20, marginTop: 11 }}>
                 <span style={{ fontSize: 12.5, color: err ? "var(--fail)" : "var(--text-lo)", display: "inline-flex", alignItems: "center", gap: 7 }}>
-                  {err ? <><Ic.x s={13} /> {err}</> : <><Ic.lock s={13} /> Public PRs verify instantly.</>}
+                  {err ? <><Ic.x s={13} /> {err}</> : <><Ic.lock s={13} /> Public PRs &amp; repos verify instantly.</>}
                 </span>
               </div>
               <div style={{ marginTop: 18 }}>
@@ -294,7 +296,7 @@ function PasteView({ onBack }: { onBack: () => void }) {
 }
 
 /* ---------- nav + footer ---------- */
-function Nav({ onVerify }: { onVerify: () => void }) {
+function Nav({ onVerify, onHome, onNav }: { onVerify: () => void; onHome: () => void; onNav: (hash: string) => void }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 12);
@@ -310,13 +312,13 @@ function Nav({ onVerify }: { onVerify: () => void }) {
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 50, background: scrolled ? "var(--bg-glass)" : "transparent", backdropFilter: scrolled ? "blur(14px) saturate(1.4)" : "none", borderBottom: `1px solid ${scrolled ? "var(--border)" : "transparent"}`, transition: "all .25s" }}>
       <div className="wrap" style={{ display: "flex", alignItems: "center", gap: 18, height: 62 }}>
-        <a href="#top" style={{ display: "flex", alignItems: "center", gap: 9 }}>
+        <a href="#top" onClick={(e) => { e.preventDefault(); onHome(); }} style={{ display: "flex", alignItems: "center", gap: 9 }}>
           <Ic.logo s={24} />
           <span style={{ fontWeight: 600, fontSize: 16.5, letterSpacing: "-0.03em" }}>Codeceipt</span>
         </a>
         <nav className="nav-links" style={{ display: "flex", gap: 4, marginLeft: 12 }}>
           {links.map((x) => (
-            <a key={x.l} href={x.h} style={{ fontSize: 13.5, color: "var(--text-mid)", padding: "7px 11px", borderRadius: 8 }}>{x.l}</a>
+            <a key={x.l} href={x.h} onClick={(e) => { e.preventDefault(); onNav(x.h); }} style={{ fontSize: 13.5, color: "var(--text-mid)", padding: "7px 11px", borderRadius: 8 }}>{x.l}</a>
           ))}
         </nav>
         <span style={{ flex: 1 }} />
@@ -589,7 +591,7 @@ function OpenSource() {
               <p style={{ fontSize: 13.5, color: "var(--text-mid)", lineHeight: 1.5, marginBottom: 16 }}>
                 Clone it, audit it, run it in CI. The verdict on every receipt comes from this code — nothing hidden.
               </p>
-              <button className="btn btn-ghost" style={{ width: "100%" }}><Ic.github s={16} /> View the engine on GitHub <Ic.arrowUpRight s={15} /></button>
+              <button className="btn btn-ghost" onClick={() => window.open(REPO_URL, "_blank", "noopener,noreferrer")} style={{ width: "100%" }}><Ic.github s={16} /> View the engine on GitHub <Ic.arrowUpRight s={15} /></button>
             </div>
           </div>
         </div>
@@ -600,21 +602,20 @@ function OpenSource() {
 
 function Pricing({ onVerify }: { onVerify: () => void }) {
   const plans = [
-    { name: "Free", price: "$0", unit: "forever", desc: "For solo devs proving public work.", feats: ["Engine, self-hosted (Apache-2.0)", "Public PR receipts", "Re-verify + public URL", "README badge"], cta: "Start free", hot: false },
-    { name: "Pro", price: "$19", unit: "/ month", desc: "For freelancers shipping to clients.", feats: ["Everything in Free", "Hosted receipts + history", "Private repos (GitHub OAuth)", "PDF export + branding", "GitHub Action"], cta: "Start Pro trial", hot: true },
-    { name: "Team", price: "$59", unit: "/ month", desc: "For agencies with many clients.", feats: ["Everything in Pro", "Org-wide receipts", "Agency branding", "Priority execution", "SSO + audit log"], cta: "Talk to us", hot: false },
+    { name: "Free", price: "$0", unit: "forever", desc: "Check any public PR. See if it passes — or fails.", feats: ["Public pass / fail verdict", "Signed, re-runnable result", "Self-host the engine (Apache-2.0)", "README badge"], cta: "Check a PR", hot: false },
+    { name: "Full receipt", price: "$5", unit: "/ receipt", desc: "Unlock the full proof you hand a client.", feats: ["Everything in Free", "Full per-criterion breakdown", "Copy-paste fix prompt for every failure", "Shareable receipt + PDF export", "Leave a contact to get it fixed"], cta: "Verify & unlock — $5", hot: true },
   ];
   return (
     <section id="pricing" className="section">
       <div className="wrap">
         <div style={{ textAlign: "center", maxWidth: 600, margin: "0 auto 44px" }}>
           <Eyebrow>Pricing</Eyebrow>
-          <h2 style={{ fontSize: "clamp(28px,4.6vw,42px)", letterSpacing: "-0.035em" }}>Engine free forever.</h2>
+          <h2 style={{ fontSize: "clamp(28px,4.6vw,42px)", letterSpacing: "-0.035em" }}>Free tells you pass or fail.</h2>
           <p style={{ fontSize: 16.5, color: "var(--text-mid)", marginTop: 14, lineHeight: 1.5 }}>
-            The engine is Apache-2.0 — free forever. You pay for hosted receipts and the Action.
+            Five dollars unlocks the whole receipt — every criterion, the fix prompt for what failed, and a link you can hand a client.
           </p>
         </div>
-        <div className="price-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, alignItems: "start" }}>
+        <div className="price-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16, alignItems: "start", maxWidth: 720, margin: "0 auto" }}>
           {plans.map((p) => (
             <div key={p.name} className="card" style={{ padding: 26, position: "relative", borderColor: p.hot ? "var(--green-line)" : "var(--border)", background: p.hot ? "linear-gradient(180deg, var(--green-soft), var(--bg-1) 60%)" : "var(--bg-1)", boxShadow: p.hot ? "0 20px 60px rgba(74,222,128,0.10)" : "none", transform: p.hot ? "translateY(-8px)" : "none" }}>
               {p.hot && <span className="chip chip-green" style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", height: 26 }}>Most popular</span>}
@@ -646,7 +647,7 @@ function FAQ() {
     { q: "Can a Receipt be faked?", a: "No. Every receipt is re-verifiable and machine-checkable. Anyone can re-run the same verification and get the same fingerprint." },
     { q: "What does “verify by execution” actually mean?", a: "Instead of trusting the agent’s “✅ all done,” we check each declared criterion against the diff and run the tests/type-checks the PR claims to satisfy. The verdict reflects what actually happened." },
     { q: "Does my code leave my machine?", a: "Public PRs verify instantly. For private repos and real test execution, run the GitHub Action — code runs in your own runner and is never retained. The engine is open-source." },
-    { q: "What’s free vs paid?", a: "The engine is Apache-2.0 and free forever. Paid plans add hosted receipts, history, private-repo OAuth, PDF export, and branding." },
+    { q: "What’s free vs paid?", a: "Checking a public PR for a pass/fail verdict is free — and the engine is Apache-2.0, so you can self-host it forever. Five dollars per receipt unlocks the full per-criterion breakdown, the fix prompt for anything that failed, PDF export, and a shareable link." },
   ];
   const [open, setOpen] = useState(0);
   return (
@@ -689,7 +690,7 @@ function FinalCTA({ onVerify }: { onVerify: () => void }) {
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
           <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={18} /> Verify your first PR</button>
-          <button className="btn btn-ghost btn-lg"><Ic.github s={17} /> Read the engine</button>
+          <button className="btn btn-ghost btn-lg" onClick={() => window.open(REPO_URL, "_blank", "noopener,noreferrer")}><Ic.github s={17} /> Read the engine</button>
         </div>
       </div>
     </section>
@@ -700,24 +701,45 @@ function FinalCTA({ onVerify }: { onVerify: () => void }) {
 export function Landing() {
   const router = useRouter();
   const [view, setView] = useState<"landing" | "paste">("landing");
+  const [pendingHash, setPendingHash] = useState<string | null>(null);
   const onReceipt = (id: string) => router.push(`/r/${id}`);
   const onVerify = () => {
     setView("paste");
     window.scrollTo({ top: 0 });
   };
+  const onHome = () => {
+    setView("landing");
+    window.scrollTo({ top: 0 });
+  };
+  // Nav section links must work from the paste view too, where the landing
+  // sections aren't mounted: switch back first, then scroll once they exist.
+  const onNav = (hash: string) => {
+    if (view === "paste") {
+      setPendingHash(hash);
+      setView("landing");
+    } else {
+      document.querySelector(hash)?.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+  useEffect(() => {
+    if (view === "landing" && pendingHash) {
+      document.querySelector(pendingHash)?.scrollIntoView({ behavior: "smooth" });
+      setPendingHash(null);
+    }
+  }, [view, pendingHash]);
 
   if (view === "paste") {
     return (
       <>
-        <Nav onVerify={onVerify} />
-        <PasteView onBack={() => setView("landing")} />
+        <Nav onVerify={onVerify} onHome={onHome} onNav={onNav} />
+        <PasteView onBack={onHome} />
       </>
     );
   }
 
   return (
     <>
-      <Nav onVerify={onVerify} />
+      <Nav onVerify={onVerify} onHome={onHome} onNav={onNav} />
       <main>
         <Hero onVerify={onVerify} onReceipt={onReceipt} />
         <Problem />
