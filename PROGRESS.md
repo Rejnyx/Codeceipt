@@ -19,6 +19,8 @@
 | S0.10 | **`@codeceipt/engine` in-repo** (pnpm monorepo, real diff verification) | done |
 | S0.11 | Wire web → engine in-process (`static` mode) + CLI bin | done |
 | S0.16 | **R2 review pipeline** on engine + monorepo (subagents) | done — 36→15 confirmed, fixes applied |
+| S0.18 | **Unit tests** (vitest) on engine + parsePrUrl — 41 passing | done |
+| S0.19 | **E2E manual verify** (paste diff → Receipt renders verdict) | done |
 | S0.17 | Working-tree mode (real `shell`/`read_set`) via GitHub Action | pending — needs sandbox (see R2 notes) |
 | S0.12 | Vercel KV provision + deploy to prod | pending |
 | S0.13 | GitHub Action (`action.yml`, POST to /api/scan) → Marketplace tag | pending — cut candidate |
@@ -39,8 +41,12 @@
 **Deferred (not live in MVP — gated behind working-tree mode S0.17):**
 - Full **sandbox** (container/gVisor/Firecracker, network egress off, read-only FS, CPU/mem limits) is the gate before running `npm test` on attacker-controlled repos. Env-scrub + timeout done; sandbox required before S0.17 ships.
 - Path-traversal containment for on-disk `file_predicate` (`path.resolve` + workingDir prefix check) — implement with S0.17.
-- Engine unit tests (parseDiff property tests, criteria) — follow-up.
 - Shared label constants between criteria.ts and mockVerdict — minor SSOT follow-up.
+
+## Tests + verification (2026-05-30)
+
+- **41 unit tests passing** (vitest): `packages/engine/src/{diff,criteria,index}.test.ts` + `lib/github.test.ts`. Cover parseDiff edge cases (rename/binary/CRLF/`++`/`--`/multi-file), all secret patterns, verdict roll-up + schema conformance, mockVerdict shape, and the security-critical `parsePrUrl` (host allowlist, userinfo trick, traversal). Run: `pnpm test`.
+- **E2E manually verified**: `pnpm dev` → `POST /api/scan` (secret diff) → `201 {id}` → `GET /r/<id>` renders verdict **failed** + per-criterion breakdown. Full paste → Receipt flow works.
 
 ## Cut order if time slips (from PITCH.md)
 

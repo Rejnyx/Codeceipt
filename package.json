@@ -10,7 +10,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit && pnpm --filter @codeceipt/engine typecheck",
-    "engine": "pnpm --filter @codeceipt/engine cli"
+    "engine": "pnpm --filter @codeceipt/engine cli",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@codeceipt/engine": "workspace:*",
@@ -26,6 +28,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }
