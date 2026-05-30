@@ -186,7 +186,7 @@ function ExecLoader({ target }: { target: string }) {
     <div style={{ width: "100%", maxWidth: 560 }}>
       <div style={{ textAlign: "center", marginBottom: 24 }}>
         <span className="chip chip-green" style={{ marginBottom: 14 }}><span className="dot dot-pass pulse" /> Executing — not summarizing</span>
-        <h2 style={{ fontSize: "clamp(22px,4vw,28px)", fontWeight: 600 }}>Verifying the pull request</h2>
+        <h2 style={{ fontSize: "clamp(22px,4vw,28px)", fontWeight: 600 }}>Running the verification</h2>
         <p className="mono" style={{ fontSize: 12.5, color: "var(--text-lo)", marginTop: 8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{target}</p>
       </div>
       <div className="card" style={{ padding: 8 }}>
@@ -252,7 +252,7 @@ function PasteView({ onBack }: { onBack: () => void }) {
           <>
             <span className="chip chip-green" style={{ marginBottom: 22 }}><Ic.bolt s={13} /> Verify by execution</span>
             <h1 style={{ fontSize: "clamp(30px,5.5vw,46px)", letterSpacing: "-0.04em", fontWeight: 600, lineHeight: 1.04 }}>
-              Paste a pull request.<br />Get a receipt.
+              Paste a PR or repo.<br />Get a receipt.
             </h1>
             <p style={{ fontSize: 16.5, color: "var(--text-mid)", marginTop: 16, marginBottom: 28, maxWidth: 460, lineHeight: 1.5 }}>
               Codeceipt verifies it against what it claims — not what the agent says — and hands you a public receipt.
@@ -324,7 +324,7 @@ function Nav({ onVerify, onHome, onNav }: { onVerify: () => void; onHome: () => 
           ))}
         </nav>
         <span style={{ flex: 1 }} />
-        <button className="btn btn-primary btn-sm" onClick={onVerify} style={{ height: 38 }}><Ic.bolt s={15} /> Verify a PR</button>
+        <button className="btn btn-primary btn-sm" onClick={onVerify} style={{ height: 38 }}><Ic.bolt s={15} /> Verify</button>
       </div>
     </header>
   );
@@ -372,7 +372,7 @@ function Hero({ onVerify, onReceipt }: { onVerify: () => void; onReceipt: (id: s
               <Ic.bolt s={15} style={{ color: "var(--green-400)" }} /> Verification by execution — not the agent&rsquo;s opinion of itself.
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 30 }}>
-              <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={17} /> Verify a PR</button>
+              <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={17} /> Verify a PR or repo</button>
               <button className="btn btn-ghost btn-lg" onClick={() => onReceipt(liveId)}><Ic.receipt s={17} /> See a live Receipt</button>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 18, marginTop: 26, color: "var(--text-lo)", fontSize: 12.5, flexWrap: "wrap" }}>
@@ -442,7 +442,7 @@ function Problem() {
 
 function HowItWorks({ onVerify }: { onVerify: () => void }) {
   const steps = [
-    { n: "1", t: "Paste a PR URL", d: "Drop in a GitHub or GitLab pull request — or add the Codeceipt Action to your repo.", tag: "input" },
+    { n: "1", t: "Paste a PR or repo URL", d: "Drop in a GitHub pull request or a whole repository — or add the Codeceipt Action to your repo.", tag: "input" },
     { n: "2", t: "Codeceipt executes it", d: "We run the declared checks ourselves against the diff and the checked-out tree — never the agent’s summary.", tag: "execution, not self-report" },
     { n: "3", t: "Share the Receipt", d: "Get a public link with a verdict your client can re-run themselves. One URL, independently checkable.", tag: "public proof" },
   ];
@@ -469,7 +469,7 @@ function HowItWorks({ onVerify }: { onVerify: () => void }) {
           ))}
         </div>
         <div style={{ display: "flex", justifyContent: "center", marginTop: 32 }}>
-          <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={16} /> Verify your first PR</button>
+          <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={16} /> Verify your first PR or repo</button>
         </div>
       </div>
     </section>
@@ -604,7 +604,7 @@ function OpenSource() {
 
 function Pricing({ onVerify }: { onVerify: () => void }) {
   const plans = [
-    { name: "Free", price: "$0", unit: "forever", desc: "Check any public PR. See if it passes — or fails.", feats: ["Public pass / fail verdict", "Signed, re-runnable result", "Self-host the engine (Apache-2.0)", "README badge"], cta: "Check a PR", hot: false },
+    { name: "Free", price: "$0", unit: "forever", desc: "Check any public PR or repo. See if it passes — or fails.", feats: ["Public pass / fail verdict", "Signed, re-runnable result", "Self-host the engine (Apache-2.0)", "README badge"], cta: "Run a free check", hot: false },
     { name: "Full receipt", price: "$5", unit: "/ receipt", desc: "Unlock the full proof you hand a client.", feats: ["Everything in Free", "Full per-criterion breakdown", "Copy-paste fix prompt for every failure", "Shareable receipt + PDF export", "Leave a contact to get it fixed"], cta: "Verify & unlock — $5", hot: true },
   ];
   return (
@@ -688,10 +688,10 @@ function FinalCTA({ onVerify }: { onVerify: () => void }) {
           Stop sending &ldquo;trust me.&rdquo;<br /><span style={{ color: "var(--green-400)" }}>Start sending a Receipt.</span>
         </h2>
         <p style={{ fontSize: 18, color: "var(--text-mid)", margin: "22px auto 0", maxWidth: 520 }}>
-          Verify your first pull request in under three minutes. Public PRs are free.
+          Verify your first PR or repo in under three minutes. Public scans are free.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={18} /> Verify your first PR</button>
+          <button className="btn btn-primary btn-lg" onClick={onVerify}><Ic.bolt s={18} /> Verify your first PR or repo</button>
           <button className="btn btn-ghost btn-lg" onClick={() => window.open(REPO_URL, "_blank", "noopener,noreferrer")}><Ic.github s={17} /> Read the engine</button>
         </div>
       </div>
