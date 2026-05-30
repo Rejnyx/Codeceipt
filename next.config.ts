@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Receipt pages are public + shareable; keep the door open for OG image routes later.
+  // The engine is a workspace TS package; let Next transpile it in-process.
+  transpilePackages: ["@codeceipt/engine"],
 };
 
 export default nextConfig;

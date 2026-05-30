@@ -83,7 +83,11 @@ export default async function ReceiptPage({
         <span>engine {receipt.engine_version}</span>
         <span>cost ${receipt.cost_usd.toFixed(4)}</span>
         <span>{receipt.duration_ms} ms</span>
-        <span>{new Date(receipt.created_at).toUTCString()}</span>
+        <span>
+          {Number.isNaN(new Date(receipt.created_at).getTime())
+            ? "—"
+            : new Date(receipt.created_at).toUTCString()}
+        </span>
       </footer>
     </main>
   );

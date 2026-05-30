@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { ScanRequest, type Receipt } from "@/lib/types";
 import { runEngine } from "@/lib/engine";
 import { saveReceipt } from "@/lib/store";
-import { fetchPrDiff, parsePrUrl } from "@/lib/github";
+import { fetchPrDiff } from "@/lib/github";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -41,8 +41,11 @@ export async function POST(req: Request) {
       diff = parsed.data.diff!;
     }
   } catch (err) {
+    // Log the real error server-side only; return a generic message so the
+    // server token's private-repo access can't be probed via status differences.
+    console.error("[codeceipt] diff fetch failed:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Could not load the diff." },
+      { error: "Could not load the PR diff. Check it's a public PR URL (or that access is configured)." },
       { status: 422 },
     );
   }
@@ -53,7 +56,7 @@ export async function POST(req: Request) {
     ...verdict,
     id: shortId(),
     pr_url: prUrl,
-    repo: repo ?? (prUrl ? parsePrUrl(prUrl)?.repo ?? null : null),
+    repo,
     created_at: new Date().toISOString(),
   };
 

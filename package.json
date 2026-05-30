@@ -3,14 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "description": "Public, independently-verifiable proof that an AI-authored PR did what it claimed.",
+  "packageManager": "pnpm@10.24.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && pnpm --filter @codeceipt/engine typecheck",
+    "engine": "pnpm --filter @codeceipt/engine cli"
   },
   "dependencies": {
+    "@codeceipt/engine": "workspace:*",
     "@vercel/kv": "^3.0.0",
     "next": "^16.0.0",
     "react": "^19.0.0",

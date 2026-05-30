@@ -7,6 +7,14 @@ import { Receipt } from "./types";
  */
 const useKv = Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN);
 
+if (!useKv && process.env.NODE_ENV === "production") {
+  // In-memory is a local-dev convenience; on serverless the save and the later
+  // read can hit different instances, 404-ing a just-created receipt.
+  console.warn(
+    "[codeceipt] KV not configured in production — receipts use per-instance memory and may 404 across instances. Set KV_REST_API_URL + KV_REST_API_TOKEN.",
+  );
+}
+
 const memory = new Map<string, Receipt>();
 const key = (id: string) => `receipt:${id}`;
 

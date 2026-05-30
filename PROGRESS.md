@@ -14,10 +14,12 @@
 | S0.5 | `/api/scan` — fetch diff (PR URL), run engine, store, return id | done |
 | S0.6 | Public Receipt page `/r/[id]` | done |
 | S0.7 | Landing page + paste form | done (baseline — design pass pending) |
-| S0.8 | **Website IA research** (what the site must contain) | in-progress |
-| S0.9 | **Design pass** via /designer (hero, Receipt page, trust signals) | pending — blocked on S0.8 |
-| S0.10 | **codeceipt-engine extraction** from cortex-x (`diff → JSON Verdict`) | pending — #1 dependency |
-| S0.11 | Wire `CODECEIPT_ENGINE_MODE=cli` to real engine | blocked on S0.10 |
+| S0.8 | **Website IA research** (what the site must contain) | done → docs/DESIGN-BRIEF.md |
+| S0.9 | **Design pass** via /designer (hero, Receipt page, trust signals) | pending (brief ready) |
+| S0.10 | **`@codeceipt/engine` in-repo** (pnpm monorepo, real diff verification) | done |
+| S0.11 | Wire web → engine in-process (`static` mode) + CLI bin | done |
+| S0.16 | **R2 review pipeline** on engine + monorepo (subagents) | done — 36→15 confirmed, fixes applied |
+| S0.17 | Working-tree mode (real `shell`/`read_set`) via GitHub Action | pending — needs sandbox (see R2 notes) |
 | S0.12 | Vercel KV provision + deploy to prod | pending |
 | S0.13 | GitHub Action (`action.yml`, POST to /api/scan) → Marketplace tag | pending — cut candidate |
 | S0.14 | Stripe Checkout (~50 Kč) validation + waitlist | pending — cut first |
@@ -29,6 +31,16 @@
 - Target contract: `codeceipt-engine --diff-stdin` reads a unified diff on stdin, prints a JSON `Verdict` (see `lib/types.ts`) on stdout. Exit 0 always; verdict carried in JSON.
 - Six criterion kinds: shell · file_predicate · regex · read_set · llm_judge · ears.
 - For MVP demo: mock is acceptable on stage if extraction slips (per PITCH.md risk register). Prefer the real engine for credibility.
+
+## R2 review (2026-05-30) — 36 raw → 15 confirmed, fixes applied
+
+**Applied:** shell:false + env-scrub + 120s timeout on `npm test` (CWE-78); github.ts URL host-allowlist + segment validation + `encodeURIComponent` + `redirect:error` + AbortController timeout + size cap (CWE-918/path-injection); diff size cap in `verifyDiff` + Zod `.max()` (CWE-1333 DoS); parseDiff now seeds path from `diff --git` header, handles rename/binary, and preserves `++`/`--` content lines; Receipt page Invalid-Date guard; store.ts prod KV warning; generic `/api/scan` error (CWE-209) + removed dead `repo` fallback; mockVerdict uses `rollUp` + mirrors real criteria (dropped fabricated llm_judge).
+
+**Deferred (not live in MVP — gated behind working-tree mode S0.17):**
+- Full **sandbox** (container/gVisor/Firecracker, network egress off, read-only FS, CPU/mem limits) is the gate before running `npm test` on attacker-controlled repos. Env-scrub + timeout done; sandbox required before S0.17 ships.
+- Path-traversal containment for on-disk `file_predicate` (`path.resolve` + workingDir prefix check) — implement with S0.17.
+- Engine unit tests (parseDiff property tests, criteria) — follow-up.
+- Shared label constants between criteria.ts and mockVerdict — minor SSOT follow-up.
 
 ## Cut order if time slips (from PITCH.md)
 

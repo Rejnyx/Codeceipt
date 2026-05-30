@@ -17,21 +17,24 @@ Codeceipt verifies that an AI-authored PR actually did what it claimed — by ex
 | Styling | Tailwind CSS 4 (zero-config, `@theme` in globals.css) |
 | Validation | Zod (trust-boundary parsing in `/api/scan`) |
 | Storage | Vercel KV (prod) · in-memory fallback (local, zero-config) |
-| Engine | `lib/engine.ts` adapter: `mock` (default) \| `cli` (extracted cortex-x) |
+| Engine | **`@codeceipt/engine`** (packages/engine, Apache-2.0) — `verifyDiff(diff)`; web wraps via `lib/engine.ts` (`static` \| `mock`) |
 | Deploy | Vercel (`waitUntil`, `maxDuration: 60`) |
+| Repo | **pnpm monorepo** — web at root, engine in `packages/engine` |
 | Package manager | **pnpm** |
 
 ## Architecture
 
 ```
-PR URL / diff ─▶ /api/scan ─▶ lib/github  (fetch PR diff)
-                            ─▶ lib/engine  (runEngine: mock | cli)  ◀── ENGINE SWAP POINT
-                            ─▶ lib/store   (Vercel KV | in-memory)
-                            ─▶ /r/[id]     (public Receipt page)
+PR URL / diff ─▶ /api/scan ─▶ lib/github         (fetch PR diff)
+                            ─▶ lib/engine          (runEngine: static | mock)
+                            ─▶ @codeceipt/engine    (verifyDiff: real diff verification)
+                            ─▶ lib/store           (Vercel KV | in-memory)
+                            ─▶ /r/[id]             (public Receipt page)
 ```
 
-- **Engine boundary is sacred:** the web only ever calls `runEngine(diff): Promise<Verdict>`. It never knows mock vs real. Extract cortex-x → implement `diff stdin → JSON Verdict stdout`, set `CODECEIPT_ENGINE_MODE=cli`. Do not leak engine internals into the web layer.
-- **Verdict/Receipt schema** is the contract — defined once in `lib/types.ts` (Zod). Mock and CLI both must satisfy it. SSOT.
+- **Engine boundary is sacred:** the web only ever calls `runEngine(diff): Promise<Verdict>` (in `lib/engine.ts`). It never reaches into `@codeceipt/engine` internals. `static` = real diff verification; `mock` = deterministic offline demo.
+- **Engine modes:** static mode verifies diff-only criteria (regex secrets, file_predicate, read_set, ears). Executable criteria (`shell` tests, on-disk `file_predicate`, `read_set` globs) light up only with a working tree — that's the GitHub Action surface (`verifyDiff(diff, { workingDir })`). Static mode is honest about what it can't prove from a diff alone.
+- **Verdict schema is the SSOT** — defined once in `packages/engine/src/types.ts` (Zod). Web re-exports it via `lib/types.ts` and extends it to `Receipt`. Engine + web + CLI all satisfy it.
 - Receipts are public artifacts; `/r/[id]` is server-rendered, shareable, indexable.
 
 ## Commands
@@ -58,9 +61,12 @@ See [.env.example](./.env.example). Runs with **zero config** (mock engine + in-
 ## Stats
 
 - Stage: greenfield MVP, Builders Day Prague 2026-05-30
-- Routes: `/`, `/api/scan`, `/r/[id]`
-- Build: green (typecheck + next build)
+- Routes: `/`, `/api/scan`, `/r/[id]` · Packages: `@codeceipt/engine`
+- Build: green (engine tsc + root typecheck + next build); CLI smoke-tested
+- Engine: real diff-based verification (regex/file_predicate/read_set/ears + shell static-aware)
 
 ## Open dependencies (see PROGRESS.md)
 
-- **codeceipt-engine NOT yet extracted** from cortex-x — web runs on the mock. This is the #1 build dependency for a real demo.
+- **Working-tree mode** (real `shell`/`read_set` execution) — needs the GitHub Action surface (clone + run). Static paste-mode is honest that it can't run tests from a diff.
+- **`llm_judge` wiring** (intent match) — optional, gated behind an API key.
+- **Deploy** — Vercel KV provision + prod deploy.
