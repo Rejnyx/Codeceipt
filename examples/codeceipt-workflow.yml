@@ -1,0 +1,33 @@
+# Drop this in your repo at .github/workflows/codeceipt.yml
+# It verifies every PR by execution and posts a public receipt.
+name: Codeceipt
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write # to post the receipt as a PR comment
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so Codeceipt can diff base...head accurately.
+          fetch-depth: 0
+
+      # Install YOUR project's deps so declared `shell` criteria (e.g. tests)
+      # can actually run. Use whatever your project needs.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+
+      - name: Codeceipt
+        uses: Rejnyx/Codeceipt@v1
+        with:
+          # openai-api-key: ${{ secrets.OPENAI_API_KEY }}   # optional intent check
+          # ingest-token:  ${{ secrets.CODECEIPT_INGEST_TOKEN }}
+          fail-on-block: "true"

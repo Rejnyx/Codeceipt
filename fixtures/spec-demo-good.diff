@@ -1,0 +1,30 @@
+diff --git a/src/webhooks/handler.ts b/src/webhooks/handler.ts
+--- a/src/webhooks/handler.ts
++++ b/src/webhooks/handler.ts
+@@ -1,8 +1,16 @@
+ export async function handleEvent(req: Request) {
+   const event = parse(req);
++  // a replayed event must not be processed twice
++  const idempotencyKey = event.id;
++  const seen = await db.webhookEvents.findUnique({
++    where: { provider_eventId: { provider, eventId: idempotencyKey } },
++  });
++  if (seen) return ok({ status: "already_processed" });
+   const result = await processCharge(event);
++  await db.webhookEvents.create({ data: { provider, eventId: event.id } });
+   return ok(result);
+ }
+diff --git a/src/webhooks/idempotency.spec.ts b/src/webhooks/idempotency.spec.ts
+new file mode 100644
+--- /dev/null
++++ b/src/webhooks/idempotency.spec.ts
+@@ -0,0 +1,9 @@
++import { test, expect } from "vitest";
++import { handleEvent } from "./handler";
++
++test("a replayed event is not processed twice", async () => {
++  const e = makeEvent("evt_1");
++  await handleEvent(e);
++  const second = await handleEvent(e);
++  expect(second.status).toBe("already_processed");
++});

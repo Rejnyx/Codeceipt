@@ -7,7 +7,7 @@
 > **Stage:** MVP scoping → Builders Day Prague 2026-05-30 build sprint.
 > **Author:** David Rajnoha — [davidrajnoha.dev](https://davidrajnoha.dev) · GitHub [@Rejnyx](https://github.com/Rejnyx)
 > **Engine:** cortex-x v0.3.0 (2955 tests, 28 standards, Apache-2.0, public preview 2026-05-14). The web wrapper + GitHub Action are the Builders Day build.
-> **SSOT note:** This file is the single source of truth for Codeceipt. The Builders Day pitch lives in [PITCH.md](./PITCH.md); research grounding in [RESEARCH-ANCHORS.md](./RESEARCH-ANCHORS.md); the decision trail that produced this positioning in [claude-session.md](./claude-session.md). Earlier, superseded drafts are in [archive/](./archive/).
+> **SSOT note:** This file is the single source of truth for Codeceipt. The Builders Day pitch lives in [PITCH.md](./PITCH.md); the mentor 1:1 business cheat sheet in [MENTOR-1ON1.md](./MENTOR-1ON1.md); research grounding in [RESEARCH-ANCHORS.md](./RESEARCH-ANCHORS.md); the decision trail that produced this positioning in [claude-session.md](./claude-session.md). Earlier, superseded drafts are in [archive/](./archive/).
 
 ---
 
@@ -81,6 +81,16 @@ A web research sweep (2026-05-30) confirms: the AI-code-review category is crowd
 **Defensible one-liner:** *"A public, independently-verifiable receipt that proves an AI-authored PR actually meets its declared acceptance criteria — checked by execution, not by trusting the agent's self-report or another AI reviewing the same diff."*
 
 ---
+
+## 4.5 Scope decision — client-first messaging, freelancer-as-distribution (mentor 1:1, 2026-05-30)
+
+A mentor pushed back on aiming the *message* at vibe-coding freelancers. The resolution (does not change the engine or the wedge):
+
+- **Buyer / beneficiary = the client.** That's where the pain and the money are, and "independently verifiable" is literally for the person who can't read code. Lead the copy with the client outcome ("did you get solid work, or slop that breaks in 3 months?").
+- **Distribution channel = the freelancer.** They have the recurring reason to run it (every PR, every delivery) and they spread the badge across repos. Don't drop them — they're how clients discover Codeceipt.
+- **The fail path becomes the product's second act.** A FAILED verdict is no longer a dead-end red. The engine emits a **copy-paste remediation prompt** (`buildFixPrompt`) built from exactly which declared criteria didn't reproduce (cmd → out) — the user drops it back into their AI agent and fixes the work, then re-verifies. Deterministic, offline, no model call. Shown on every failed receipt.
+- **Deferred (channel-conflict risk):** a "we'll fix it for you — leave your details" fixer-marketplace is a *bigger but different* business that makes the freelancer an adversary. Keep self-serve fix (no conflict) now; revisit the human-fixer marketplace only after picking a side and having volume.
+- **Whole-repo "delivery receipt":** criteria need not describe one PR — they can be the client contract (`codeceipt.yml`) verified against the entire delivered repo via the Action. Strong client→freelancer story; the working-tree surface already supports it.
 
 ## 5. The Receipt page — the differentiator
 

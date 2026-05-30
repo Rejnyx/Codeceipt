@@ -6,6 +6,16 @@ export interface CriteriaContext {
   workingDir?: string;
   /** Declared acceptance criteria text (for the EARS check). */
   criteriaSpec?: string;
+  /**
+   * Allow executing declared `shell` commands. Requires `workingDir`. Set by
+   * the GitHub Action surface (the command runs in the user's own runner); the
+   * web/static path leaves this false so commands are reported as skipped.
+   */
+  allowExec?: boolean;
+  /** API key for the optional `llm_judge` intent check (else it's skipped). */
+  llmApiKey?: string;
+  /** Model id for `llm_judge` (default: gpt-4o-mini). */
+  llmModel?: string;
 }
 
 const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
@@ -21,7 +31,7 @@ const SECRET_PATTERNS: { name: string; re: RegExp }[] = [
 const SENSITIVE_ENV = /(TOKEN|SECRET|KEY|PASSWORD|CREDENTIAL|KV_|GITHUB_|OPENAI|OPENROUTER|AWS_|VERCEL|STRIPE)/i;
 
 /** Strip secret-bearing vars so an untrusted repo's test script can't read them. */
-function scrubEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
+export function scrubEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   const out: Record<string, string | undefined> = {};
   for (const [k, v] of Object.entries(env)) if (!SENSITIVE_ENV.test(k)) out[k] = v;
   return out;
@@ -106,7 +116,7 @@ export async function testsExecute(
     /(\.test\.|\.spec\.|__tests__|(^|\/)tests?\/)/i.test(f.path),
   );
 
-  if (!ctx.workingDir) {
+  if (!ctx.workingDir || !ctx.allowExec) {
     return {
       kind: "shell",
       blocking: false,

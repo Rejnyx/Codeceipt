@@ -1,0 +1,11 @@
+diff --git a/src/webhooks/handler.ts b/src/webhooks/handler.ts
+--- a/src/webhooks/handler.ts
++++ b/src/webhooks/handler.ts
+@@ -1,6 +1,8 @@
+ export async function handleEvent(req: Request) {
+   const event = parse(req);
++  // "Done — added the keys + tests, all passing." (the agent's word)
+   const result = await processCharge(event);
++  log("processed", event.id);
+   return ok(result);
+ }

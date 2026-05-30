@@ -12,13 +12,17 @@
   "bin": {
     "codeceipt-engine": "./dist/cli.js"
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "cli": "tsx src/cli.ts"
   },
   "dependencies": {
+    "yaml": "^2.9.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -1,0 +1,20 @@
+# Codeceipt verifies its own PRs (dogfooding). These are the acceptance
+# criteria a change must reproduce to count as done. Each is checked
+# independently and by execution — see /r/<id> for the receipt.
+criteria:
+  - shell: pnpm typecheck
+    label: Types are sound (web + engine)
+
+  - shell: pnpm test
+    label: Engine + web test suites pass
+
+  - read:
+      - packages/engine/src/spec.ts
+      - packages/engine/src/index.ts
+    label: Spec-verifier remains the engine core
+
+  - regex: "blocking:\\s*true"
+    in: packages/engine/src/criteria.ts
+    label: The secret check stays a blocking gate
+
+  - ears: When a blocking criterion fails, the gate shall report FAILED.

@@ -1,3 +1,4 @@
+import { summarizeDiff } from "@codeceipt/engine";
 import { ScanRequest, type Receipt } from "./types";
 import { runEngine } from "./engine";
 import { saveReceipt } from "./store";
@@ -57,6 +58,9 @@ export async function runScan(body: unknown): Promise<ScanResult> {
     pr_url: prUrl,
     repo,
     created_at: new Date().toISOString(),
+    diff: summarizeDiff(diff),
+    env: "static · paste mode (diff-only)",
+    pr: repo ? { platform: "GitHub", repo } : undefined,
   };
   await saveReceipt(receipt);
   return { ok: true, id: receipt.id };
