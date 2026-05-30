@@ -17,12 +17,12 @@ describe("runScan (full flow: validate → engine → store)", () => {
     }
   });
 
-  it("creates a warn receipt for a clean diff (tests not runnable statically)", async () => {
+  it("creates a pass receipt for a clean diff (no blocking failures)", async () => {
     const r = await runScan({
       diff: "diff --git a/x.ts b/x.ts\n--- a/x.ts\n+++ b/x.ts\n@@ -1 +1 @@\n+const sum = a + b\n",
     });
     expect(r.ok).toBe(true);
-    if (r.ok) expect((await getReceipt(r.id))?.verdict).toBe("warn");
+    if (r.ok) expect((await getReceipt(r.id))?.verdict).toBe("pass");
   });
 
   it("rejects a body with neither pr_url nor diff (400)", async () => {

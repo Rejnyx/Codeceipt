@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codeceipt — Ship AI code. Not AI slop.</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + Babel (pinned) -->
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- data (plain JS) -->
+  <script src="data.js"></script>
+
+  <!-- components (babel) -->
+  <script type="text/babel" src="components/icons.jsx"></script>
+  <script type="text/babel" src="components/interactive.jsx"></script>
+  <script type="text/babel" src="components/receipt.jsx"></script>
+  <script type="text/babel" src="components/hero-anim.jsx"></script>
+  <script type="text/babel" src="components/receipt-page.jsx"></script>
+  <script type="text/babel" src="components/flow.jsx"></script>
+  <script type="text/babel" src="components/nav.jsx"></script>
+  <script type="text/babel" src="components/landing-a.jsx"></script>
+  <script type="text/babel" src="components/landing-b.jsx"></script>
+  <script type="text/babel" src="components/landing-c.jsx"></script>
+  <script type="text/babel" src="components/app.jsx"></script>
+
+  <!-- responsive helpers -->
+  <style id="responsive">
+    @media (max-width: 920px) {
+      .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+      .hero-grid > div:last-child { order: -1; }
+      .trust-grid { grid-template-columns: 1fr !important; gap: 18px !important; }
+      .trust-grid > div { border-left: none !important; padding-left: 0 !important; border-top: 1px solid var(--border); padding-top: 16px !important; }
+      .showcase-grid, .os-grid, .social-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+      .showcase-grid > div:last-child { order: -1; }
+      .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+    }
+    @media (max-width: 760px) {
+      .nav-links, .nav-gh { display: none !important; }
+      .nav-burger { display: flex !important; }
+      .claim-grid, .pain-grid, .how-grid, .pricing-grid, .audience-grid, .rcpt-grid { grid-template-columns: 1fr !important; }
+      .pricing-grid > div { transform: none !important; }
+      .stat-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    @media (max-width: 460px) {
+      .footer-grid { grid-template-columns: 1fr !important; }
+      .stat-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+
+  <!-- direct-edit style overrides -->
+  <style id="__om-edit-overrides"></style>
+</body>
+</html>

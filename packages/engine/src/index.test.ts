@@ -16,15 +16,15 @@ describe("verifyDiff", () => {
     expect(v.criteria.find((c) => c.kind === "regex")?.status).toBe("fail");
   });
 
-  it("rolls up to warn for a clean diff in static mode (tests not runnable)", async () => {
+  it("rolls up to pass for a clean diff (no blocking failures)", async () => {
     const v = await verifyDiff(clean);
-    expect(v.verdict).toBe("warn");
+    expect(v.verdict).toBe("pass");
   });
 
-  it("caps oversized diffs instead of scanning them", async () => {
+  it("fails (won't bless) an oversized diff instead of scanning it", async () => {
     const huge = "+".padEnd(2_000_001, "x");
     const v = await verifyDiff(huge);
-    expect(v.verdict).toBe("warn");
+    expect(v.verdict).toBe("fail");
     expect(v.criteria[0].detail).toMatch(/too large|limit/i);
   });
 

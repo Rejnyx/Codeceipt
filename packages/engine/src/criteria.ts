@@ -27,7 +27,7 @@ function scrubEnv(env: NodeJS.ProcessEnv): Record<string, string | undefined> {
   return out;
 }
 
-/** regex: no secret-shaped tokens in ADDED lines. */
+/** regex (blocking): no secret-shaped tokens in ADDED lines. */
 export function noHardcodedSecrets(files: DiffFile[]): CriterionResult {
   const hits: string[] = [];
   for (const f of files) {
@@ -39,6 +39,7 @@ export function noHardcodedSecrets(files: DiffFile[]): CriterionResult {
   }
   return {
     kind: "regex",
+    blocking: true,
     label: "No hardcoded secrets in the change",
     status: hits.length ? "fail" : "pass",
     detail: hits.length
@@ -47,7 +48,7 @@ export function noHardcodedSecrets(files: DiffFile[]): CriterionResult {
   };
 }
 
-/** file_predicate: declared files exist (on disk when a working tree is given). */
+/** file_predicate: declared files exist. Blocking only with a working tree. */
 export async function declaredFilesPresent(
   files: DiffFile[],
   ctx: CriteriaContext,
@@ -56,6 +57,7 @@ export async function declaredFilesPresent(
   if (!ctx.workingDir) {
     return {
       kind: "file_predicate",
+      blocking: false,
       label: "Declared files are present",
       status: declared.length ? "pass" : "warn",
       detail: declared.length
@@ -68,6 +70,7 @@ export async function declaredFilesPresent(
   const missing = declared.filter((f) => !existsSync(join(ctx.workingDir!, f.path)));
   return {
     kind: "file_predicate",
+    blocking: true,
     label: "Declared files are present",
     status: missing.length ? "fail" : "pass",
     detail: missing.length
@@ -76,12 +79,13 @@ export async function declaredFilesPresent(
   };
 }
 
-/** read_set: the change actually covers the files it touches. */
+/** read_set (advisory): the change covers the files it touches. */
 export function readSetCoverage(files: DiffFile[]): CriterionResult {
   const touched = files.length;
   const added = addedLineCount(files);
   return {
     kind: "read_set",
+    blocking: false,
     label: "Change covers the files it claims to touch",
     status: touched ? "pass" : "warn",
     detail: touched
@@ -91,8 +95,8 @@ export function readSetCoverage(files: DiffFile[]): CriterionResult {
 }
 
 /**
- * shell: the test suite exits clean. Only truly executable with a working tree;
- * in static (paste) mode we honestly report it cannot be run here.
+ * shell: the test suite exits clean. Blocking + real pass/fail only with a
+ * working tree; in static (paste) mode it is reported as skipped (non-blocking).
  */
 export async function testsExecute(
   files: DiffFile[],
@@ -105,11 +109,12 @@ export async function testsExecute(
   if (!ctx.workingDir) {
     return {
       kind: "shell",
+      blocking: false,
       label: "Test suite exits clean",
-      status: touchesTests ? "warn" : "warn",
+      status: "skipped",
       detail: touchesTests
-        ? "Test files are touched, but tests cannot be executed from a diff alone. Run via the GitHub Action (checked-out repo) for a real pass/fail."
-        : "No test files touched, and tests cannot be executed in static mode. Run via the GitHub Action for a real result.",
+        ? "Test files are touched, but tests can't run from a diff alone. Enable the GitHub Action (checked-out repo) for a real pass/fail."
+        : "No test files touched, and tests can't run in static mode. Enable the GitHub Action for a real result.",
     };
   }
 
@@ -133,22 +138,23 @@ export async function testsExecute(
 
   return {
     kind: "shell",
+    blocking: true,
     label: "Test suite exits clean",
     status: code === 0 ? "pass" : "fail",
     detail: code === 0 ? "`npm test` exited 0." : `\`npm test\` exited ${code}.`,
   };
 }
 
-const EARS_RE =
-  /\b(when|while|where|if)\b.+\b(the\s+\w+\s+)?shall\b/i;
+const EARS_RE = /\b(when|while|where|if)\b.+\b(the\s+\w+\s+)?shall\b/i;
 
-/** ears: declared acceptance criteria are well-formed (EARS syntax). */
+/** ears (advisory): declared acceptance criteria are well-formed. */
 export function earsWellFormed(ctx: CriteriaContext): CriterionResult | null {
   if (!ctx.criteriaSpec) return null;
   const lines = ctx.criteriaSpec.split(/\r?\n/).filter((l) => l.trim());
   const malformed = lines.filter((l) => !EARS_RE.test(l));
   return {
     kind: "ears",
+    blocking: false,
     label: "Acceptance criteria are well-formed (EARS)",
     status: malformed.length ? "warn" : "pass",
     detail: malformed.length

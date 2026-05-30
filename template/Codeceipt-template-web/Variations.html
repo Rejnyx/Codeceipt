@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Codeceipt — Variations</title>
+  <link rel="stylesheet" href="app.css" />
+  <style> body { background: #0a0a0b; } </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="data.js"></script>
+  <script type="text/babel" src="components/icons.jsx"></script>
+  <script type="text/babel" src="components/receipt.jsx"></script>
+  <script type="text/babel" src="components/variations.jsx"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+
+  <script type="text/babel">
+    const R = window.RECEIPTS;
+    const V = R[R._verified], F = R[R._failed], P = R[R._partial];
+
+    function Variations() {
+      return (
+        <DesignCanvas title="Codeceipt — Variations">
+          <DCSection id="hero" title="Hero" subtitle="Three directions for the landing hero — pick one or mix elements.">
+            <DCArtboard id="hero-split" label="A · Split — text + receipt (shipped)" width={1100} height={600}>
+              <HeroSplit sample={V} />
+            </DCArtboard>
+            <DCArtboard id="hero-centered" label="B · Centered — inline paste box" width={1100} height={600}>
+              <HeroCentered sample={V} />
+            </DCArtboard>
+            <DCArtboard id="hero-terminal" label="C · Terminal-forward — execution as the visual" width={1100} height={600}>
+              <HeroTerminal sample={V} />
+            </DCArtboard>
+          </DCSection>
+
+          <DCSection id="receipt" title="Receipt card" subtitle="Three ways to render the hero/share receipt. Shown across VERIFIED / FAILED / PARTIAL states.">
+            <DCArtboard id="rc-doc" label="A · Document — perforated receipt (VERIFIED)" width={480} height={640}>
+              <ReceiptVarDoc data={V} />
+            </DCArtboard>
+            <DCArtboard id="rc-dash" label="B · Dashboard — criteria grid (FAILED)" width={480} height={560}>
+              <ReceiptVarDashboard data={F} />
+            </DCArtboard>
+            <DCArtboard id="rc-min" label="C · Minimal — badge card (PARTIAL)" width={480} height={560}>
+              <ReceiptVarMinimal data={P} />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<Variations />);
+  </script>
+</body>
+</html>

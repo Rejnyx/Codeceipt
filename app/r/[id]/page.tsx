@@ -7,12 +7,14 @@ const STATUS_COLOR: Record<CriterionStatus, string> = {
   pass: "var(--color-pass)",
   fail: "var(--color-fail)",
   warn: "var(--color-warn)",
+  skipped: "#6b7280",
 };
 
 const STATUS_LABEL: Record<CriterionStatus, string> = {
   pass: "passed",
   fail: "failed",
   warn: "warning",
+  skipped: "not run",
 };
 
 export default async function ReceiptPage({
@@ -23,6 +25,20 @@ export default async function ReceiptPage({
   const { id } = await params;
   const receipt = await getReceipt(id);
   if (!receipt) notFound();
+
+  const blockingFails = receipt.criteria.filter(
+    (c) => c.blocking && c.status === "fail",
+  ).length;
+  const advisories = receipt.criteria.filter((c) => c.status === "warn").length;
+  const notRun = receipt.criteria.filter((c) => c.status === "skipped").length;
+  const summary =
+    receipt.verdict === "pass"
+      ? `Passed all blocking checks${
+          advisories || notRun
+            ? ` — ${advisories} advisory, ${notRun} not run in this mode`
+            : ""
+        }.`
+      : `Blocked — ${blockingFails} blocking check${blockingFails === 1 ? "" : "s"} failed.`;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
@@ -56,6 +72,8 @@ export default async function ReceiptPage({
         </span>
       </header>
 
+      <p className="mt-6 text-white/70">{summary}</p>
+
       <ul className="mt-8 space-y-3">
         {receipt.criteria.map((c, i) => (
           <li
@@ -72,6 +90,9 @@ export default async function ReceiptPage({
                 <code className="rounded bg-white/10 px-1.5 py-0.5 text-xs text-white/50">
                   {c.kind}
                 </code>
+                {!c.blocking && (
+                  <span className="text-xs text-white/30">advisory</span>
+                )}
               </div>
               <p className="mt-1 text-sm text-white/55">{c.detail}</p>
             </div>

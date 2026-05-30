@@ -7,39 +7,39 @@ import {
   testsExecute,
   earsWellFormed,
 } from "./criteria";
-import { ENGINE_VERSION, type CriterionResult, type CriterionStatus, type Verdict } from "./types";
+import { ENGINE_VERSION, type CriterionResult, type Verdict } from "./types";
 
 export * from "./types";
 export { parseDiff } from "./diff";
 
 export interface VerifyOptions extends CriteriaContext {}
 
-function rollUp(criteria: CriterionResult[]): CriterionStatus {
-  if (criteria.some((c) => c.status === "fail")) return "fail";
-  if (criteria.some((c) => c.status === "warn")) return "warn";
-  return "pass";
+const MAX_DIFF_BYTES = 2_000_000;
+
+/** A gate: FAIL only when a blocking check fails; advisory/skipped never block. */
+function rollUp(criteria: CriterionResult[]): "pass" | "fail" {
+  return criteria.some((c) => c.blocking && c.status === "fail") ? "fail" : "pass";
 }
 
 /**
  * Verify a unified diff. In static (paste) mode runs diff-only criteria; with a
  * `workingDir` it additionally runs executable criteria (tests, on-disk files).
  */
-const MAX_DIFF_BYTES = 2_000_000;
-
 export async function verifyDiff(diff: string, opts: VerifyOptions = {}): Promise<Verdict> {
   const startedAt = performance.now();
 
   if (diff.length > MAX_DIFF_BYTES) {
     return {
-      verdict: "warn",
+      verdict: "fail",
       criteria: [
         {
           kind: "file_predicate",
+          blocking: true,
           label: "Diff size within limits",
-          status: "warn",
+          status: "fail",
           detail: `Diff is ${Math.round(diff.length / 1024)}KB, over the ${Math.round(
             MAX_DIFF_BYTES / 1024,
-          )}KB limit — skipped to avoid resource exhaustion. Split the PR or run via the Action.`,
+          )}KB limit — refusing to bless an unscanned change. Split the PR or run via the Action.`,
         },
       ],
       cost_usd: 0,
@@ -74,12 +74,12 @@ export async function verifyDiff(diff: string, opts: VerifyOptions = {}): Promis
  */
 export function mockVerdict(diff: string): Verdict {
   const files = parseDiff(diff);
-  // Mirror verifyDiff's static criterion set (no fabricated llm_judge), reuse the
-  // real deterministic checks, and share rollUp so demo and real can't diverge.
+  // Mirror verifyDiff's static criterion set + roll-up so demo and real can't diverge.
   const criteria: CriterionResult[] = [
     noHardcodedSecrets(files),
     {
       kind: "file_predicate",
+      blocking: false,
       label: "Declared files are present",
       status: files.length ? "pass" : "warn",
       detail: `${files.length} file(s) declared in the diff (demo).`,
@@ -87,9 +87,10 @@ export function mockVerdict(diff: string): Verdict {
     readSetCoverage(files),
     {
       kind: "shell",
+      blocking: false,
       label: "Test suite exits clean",
-      status: "pass",
-      detail: "npm test exited 0 (demo).",
+      status: "skipped",
+      detail: "Tests run via the GitHub Action (demo).",
     },
   ];
   return {

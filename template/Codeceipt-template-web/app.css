@@ -1,0 +1,254 @@
+/* ============================================================
+   Codeceipt — Design System
+   Dark, Vercel/Supabase-tier. Geist + Geist Mono.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ---- Surfaces (near-black, layered) ---- */
+  --bg-0: #08090A;          /* page */
+  --bg-1: #0D0E10;          /* sections / panels */
+  --bg-2: #131517;          /* elevated cards */
+  --bg-3: #191B1E;          /* hover / inset */
+  --bg-glass: rgba(19, 21, 23, 0.72);
+
+  /* ---- Borders ---- */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-faint: rgba(255, 255, 255, 0.05);
+
+  /* ---- Text ---- */
+  --text-hi: #EDEDED;
+  --text-mid: #9CA0A8;
+  --text-lo: #6B7078;
+  --text-dim: #4A4E55;
+
+  /* ---- Accent green (#4ADE80 scale) ---- */
+  --green-50:  #E6FBEF;
+  --green-200: #A7F3C7;
+  --green-300: #6EE7A4;
+  --green-400: #4ADE80;     /* primary */
+  --green-500: #22C55E;
+  --green-600: #16A34A;
+  --green-700: #0F7A38;
+  --green-glow: rgba(74, 222, 128, 0.16);
+  --green-soft: rgba(74, 222, 128, 0.10);
+  --green-line: rgba(74, 222, 128, 0.28);
+
+  /* ---- Verdict ---- */
+  --pass: #4ADE80;
+  --pass-bg: rgba(74, 222, 128, 0.10);
+  --pass-line: rgba(74, 222, 128, 0.30);
+  --fail: #F87171;
+  --fail-bg: rgba(248, 113, 113, 0.10);
+  --fail-line: rgba(248, 113, 113, 0.30);
+  --warn: #FBBF24;
+  --warn-bg: rgba(251, 191, 36, 0.10);
+  --warn-line: rgba(251, 191, 36, 0.30);
+  --info: #60A5FA;
+
+  /* ---- Type ---- */
+  --sans: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Geist Mono', 'SF Mono', ui-monospace, Menlo, monospace;
+
+  /* ---- Layout ---- */
+  --maxw: 1120px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.5);
+  --shadow-lg: 0 24px 70px rgba(0,0,0,0.65);
+  --shadow-glow: 0 0 0 1px var(--green-line), 0 16px 60px rgba(74,222,128,0.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg-0);
+  color: var(--text-hi);
+  line-height: 1.5;
+  letter-spacing: -0.011em;
+  overflow-x: hidden;
+}
+
+#root { min-height: 100vh; }
+
+::selection { background: rgba(74, 222, 128, 0.28); color: #fff; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input { font-family: inherit; }
+
+/* scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #26282c; border-radius: 6px; border: 2px solid var(--bg-0); }
+::-webkit-scrollbar-thumb:hover { background: #34373c; }
+
+/* ============================================================
+   Typography helpers
+   ============================================================ */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+.mono { font-family: var(--mono); }
+.tnum { font-variant-numeric: tabular-nums; }
+
+h1, h2, h3 { letter-spacing: -0.03em; font-weight: 600; line-height: 1.05; }
+
+/* ============================================================
+   Layout
+   ============================================================ */
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; width: 100%; }
+.section { padding: 96px 0; position: relative; }
+.section-tight { padding: 64px 0; }
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14.5px; font-weight: 500; letter-spacing: -0.01em;
+  transition: all .16s cubic-bezier(.2,.6,.3,1);
+  white-space: nowrap; user-select: none;
+}
+.btn-primary {
+  background: var(--green-400); color: #052e16;
+  font-weight: 600;
+  box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 6px 22px rgba(74,222,128,.22);
+}
+.btn-primary:hover { background: var(--green-300); transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 10px 30px rgba(74,222,128,.34); }
+.btn-primary:active { transform: translateY(0); }
+.btn-ghost {
+  background: var(--bg-2); color: var(--text-hi);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { background: var(--bg-3); border-color: var(--border-strong); }
+.btn-quiet { background: transparent; color: var(--text-mid); }
+.btn-quiet:hover { color: var(--text-hi); background: var(--bg-2); }
+.btn-sm { height: 36px; padding: 0 13px; font-size: 13.5px; border-radius: 8px; }
+.btn-lg { height: 50px; padding: 0 24px; font-size: 15.5px; border-radius: 11px; }
+
+/* ============================================================
+   Cards / surfaces
+   ============================================================ */
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.card-2 { background: var(--bg-2); }
+
+.hairline { height: 1px; background: var(--border); border: 0; }
+
+/* pill / chip */
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 28px; padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12.5px; font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-2);
+  color: var(--text-mid);
+}
+.chip-green { border-color: var(--green-line); background: var(--green-soft); color: var(--green-300); }
+
+/* badge dot */
+.dot { width: 7px; height: 7px; border-radius: 999px; display: inline-block; flex: none; }
+.dot-pass { background: var(--pass); box-shadow: 0 0 8px var(--pass); }
+.dot-fail { background: var(--fail); box-shadow: 0 0 8px var(--fail); }
+.dot-warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+
+/* ============================================================
+   Verdict badge
+   ============================================================ */
+.verdict {
+  display: inline-flex; align-items: center; gap: 12px;
+  padding: 10px 18px 10px 14px; border-radius: 999px;
+  font-weight: 600; letter-spacing: -0.01em;
+  border: 1px solid;
+}
+.verdict-pass { background: var(--pass-bg); border-color: var(--pass-line); color: var(--pass); }
+.verdict-fail { background: var(--fail-bg); border-color: var(--fail-line); color: var(--fail); }
+.verdict-warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+
+/* ============================================================
+   Background textures
+   ============================================================ */
+.grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+.glow-green {
+  position: absolute; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(circle, rgba(74,222,128,0.18), transparent 65%);
+  filter: blur(40px);
+}
+
+/* cursor-follow glow */
+.cursor-glow::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  opacity: var(--glow-op, 0); transition: opacity .35s;
+  background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(74,222,128,0.10), transparent 60%);
+}
+
+/* fade-up entrance */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fadeUp .6s cubic-bezier(.2,.6,.3,1) both; }
+
+@keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.caret { animation: blink 1.05s steps(1) infinite; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(74,222,128,.35); }
+  70% { box-shadow: 0 0 0 10px rgba(74,222,128,0); }
+  100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+}
+.pulse { animation: pulse-ring 2s infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+
+/* skeleton */
+@keyframes shimmer { 100% { transform: translateX(100%); } }
+
+/* striped image placeholder */
+.placeholder {
+  position: relative; overflow: hidden;
+  background-color: var(--bg-2);
+  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0 12px, transparent 12px 24px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-family: var(--mono); font-size: 12px;
+}
+
+/* accordion */
+.acc-body { overflow: hidden; transition: height .28s cubic-bezier(.3,.7,.3,1); }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 880px) {
+  .section { padding: 64px 0; }
+  .wrap { padding: 0 18px; }
+}

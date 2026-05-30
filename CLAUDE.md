@@ -33,7 +33,8 @@ PR URL / diff ─▶ /api/scan ─▶ lib/github         (fetch PR diff)
 ```
 
 - **Engine boundary is sacred:** the web only ever calls `runEngine(diff): Promise<Verdict>` (in `lib/engine.ts`). It never reaches into `@codeceipt/engine` internals. `static` = real diff verification; `mock` = deterministic offline demo.
-- **Engine modes:** static mode verifies diff-only criteria (regex secrets, file_predicate, read_set, ears). Executable criteria (`shell` tests, on-disk `file_predicate`, `read_set` globs) light up only with a working tree — that's the GitHub Action surface (`verifyDiff(diff, { workingDir })`). Static mode is honest about what it can't prove from a diff alone.
+- **Engine modes:** static mode verifies diff-only criteria (regex secrets, file_predicate, read_set, ears). Executable criteria (`shell` tests, on-disk `file_predicate`) light up only with a working tree — that's the GitHub Action surface (`verifyDiff(diff, { workingDir })`). Static mode is honest about what it can't prove from a diff alone.
+- **Binary gate:** overall verdict is `pass | fail`, driven only by **blocking** criteria (secrets always; tests + on-disk files when a working tree is present). **Advisory** checks (read_set, ears, "no tests touched") and **skipped** checks (test execution in paste mode) render as rows but never block a merge. Each criterion carries `blocking: boolean` + `status: pass|fail|warn|skipped`.
 - **Verdict schema is the SSOT** — defined once in `packages/engine/src/types.ts` (Zod). Web re-exports it via `lib/types.ts` and extends it to `Receipt`. Engine + web + CLI all satisfy it.
 - Receipts are public artifacts; `/r/[id]` is server-rendered, shareable, indexable.
 

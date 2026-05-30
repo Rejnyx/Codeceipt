@@ -56,9 +56,10 @@ describe("declaredFilesPresent (static mode)", () => {
 });
 
 describe("testsExecute (static mode)", () => {
-  it("warns because tests cannot run from a diff alone", async () => {
+  it("is skipped + non-blocking because tests can't run from a diff alone", async () => {
     const r = await testsExecute(added("x"), {});
-    expect(r.status).toBe("warn");
+    expect(r.status).toBe("skipped");
+    expect(r.blocking).toBe(false);
     expect(r.kind).toBe("shell");
   });
 });

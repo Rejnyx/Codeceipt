@@ -43,6 +43,10 @@
 - Path-traversal containment for on-disk `file_predicate` (`path.resolve` + workingDir prefix check) — implement with S0.17.
 - Shared label constants between criteria.ts and mockVerdict — minor SSOT follow-up.
 
+## Verdict model — binary gate (2026-05-30)
+
+Driven by a real-repo test finding: in paste mode every clean PR rolled up to `warn` (un-runnable `shell` dragged the verdict), so there was no green "passed". Fixed to a **binary gate**: overall = `fail` iff a **blocking** check fails (secrets); advisory + **skipped** (test-exec in paste mode) never block. Clean code → **pass**, slop with secrets → **fail**. Criterion gains `blocking` + `skipped` status. Validated on real repos (back-office-bot, cortex-x → pass; no false-positive secrets) + fixtures (bad-leaked-secret → fail).
+
 ## Tests + verification (2026-05-30)
 
 - **41 unit tests passing** (vitest): `packages/engine/src/{diff,criteria,index}.test.ts` + `lib/github.test.ts`. Cover parseDiff edge cases (rename/binary/CRLF/`++`/`--`/multi-file), all secret patterns, verdict roll-up + schema conformance, mockVerdict shape, and the security-critical `parsePrUrl` (host allowlist, userinfo trick, traversal). Run: `pnpm test`.

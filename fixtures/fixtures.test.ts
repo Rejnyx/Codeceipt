@@ -13,13 +13,14 @@ describe("fixtures (deliberately-bad PRs prove the gate works)", () => {
     expect(v.criteria.find((c) => c.kind === "regex")?.status).toBe("fail");
   });
 
-  it("warns when a feature ships without tests", async () => {
+  it("passes a feature without tests (advisory, not blocking) but flags it", async () => {
     const v = await verifyDiff(load("bad-no-tests.diff"));
-    expect(v.verdict).toBe("warn");
+    expect(v.verdict).toBe("pass");
+    expect(v.criteria.some((c) => c.status === "skipped" || c.status === "warn")).toBe(true);
   });
 
-  it("a clean change is warn in static mode (pass needs a working tree)", async () => {
+  it("passes a clean change with tests", async () => {
     const v = await verifyDiff(load("good-with-tests.diff"));
-    expect(v.verdict).toBe("warn");
+    expect(v.verdict).toBe("pass");
   });
 });
