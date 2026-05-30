@@ -217,11 +217,13 @@ function PasteView({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(false);
 
   async function submit() {
-    const target = url.trim();
+    let target = url.trim();
     if (!target) {
-      setErr("Paste a pull-request URL to verify.");
+      setErr("Paste a GitHub PR or repo URL to verify.");
       return;
     }
+    // Be lenient: accept "github.com/owner/repo" without the scheme.
+    if (!/^https?:\/\//i.test(target)) target = "https://" + target.replace(/^\/+/, "");
     setErr("");
     setLoading(true);
     try {

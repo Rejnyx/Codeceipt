@@ -39,7 +39,9 @@ export async function runScan(body: unknown): Promise<ScanResult> {
     return { ok: true, id: receipt.id };
   }
 
-  const url = parsed.data.pr_url!;
+  // Lenient on the scheme: "github.com/owner/repo" → "https://github.com/owner/repo".
+  let url = parsed.data.pr_url!.trim();
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url.replace(/^\/+/, "");
 
   // Reject anything that's neither a PR nor a repo URL with a clear message,
   // BEFORE any network call (and before the generic catch below).

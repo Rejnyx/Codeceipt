@@ -45,7 +45,9 @@ export type Receipt = z.infer<typeof Receipt>;
 /** Request body for POST /api/scan (trust boundary). */
 export const ScanRequest = z
   .object({
-    pr_url: z.string().url().optional(),
+    // A loose string here (lenient on the scheme); the actual host is validated
+    // against the GitHub allow-list in lib/github.ts before any fetch.
+    pr_url: z.string().min(1).max(300).optional(),
     diff: z.string().max(2_000_000).optional(),
   })
   .refine((b) => b.pr_url || b.diff, {
