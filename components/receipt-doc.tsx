@@ -243,6 +243,79 @@ function FixPrompt({ receipt }: { receipt: Receipt }) {
   );
 }
 
+/**
+ * Upgrade panel — shown on a PARTIAL. A partial result isn't "weak", it's
+ * "step 1 of 2": the web saw the diff, but some checks (tests) can only run
+ * against a working tree. This frames it as a clear path to a full VERIFIED.
+ */
+function UpgradePanel({ receipt }: { receipt: Receipt }) {
+  const [copied, setCopied] = useState(false);
+  if (receipt.label !== "PARTIAL") return null;
+  const skipped = receipt.criteria.filter((c) => c.status === "skipped");
+  if (skipped.length === 0) return null;
+
+  const snippet = `# .github/workflows/codeceipt.yml
+name: Codeceipt
+on: pull_request
+permissions: { contents: read, pull-requests: write }
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - uses: Rejnyx/Codeceipt@v1
+        with: { fail-on-block: "true" }`;
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <div className="card" style={{ borderColor: "var(--warn-line)", background: "linear-gradient(180deg, var(--warn-bg), transparent)", overflow: "hidden" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "15px 18px", borderBottom: "1px solid var(--border)" }}>
+          <span style={{ width: 32, height: 32, flex: "none", borderRadius: 8, background: "var(--bg-0)", border: "1px solid var(--warn-line)", color: "var(--warn)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Ic.bolt s={16} />
+          </span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 600 }}>This is step 1 — get to a full VERIFIED</div>
+            <div style={{ fontSize: 12.5, color: "var(--text-lo)" }}>
+              The web checked everything visible in the diff. {skipped.length} check{skipped.length === 1 ? "" : "s"} need the code to actually run — add the Action and the tests execute for real.
+            </div>
+          </div>
+        </div>
+        <div style={{ padding: "12px 18px 6px" }}>
+          {skipped.map((c, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 9, padding: "5px 0", fontSize: 13, color: "var(--text-mid)" }}>
+              <Ic.minus s={14} style={{ color: "var(--warn)", flex: "none" }} />
+              <span style={{ flex: 1 }}>{c.label}</span>
+              <span className="mono" style={{ fontSize: 11.5, color: "var(--text-lo)" }}>runs via Action</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ position: "relative", margin: "8px 18px 16px" }}>
+          <pre className="mono" style={{ margin: 0, padding: "14px 16px", paddingRight: 84, fontSize: 11.5, color: "var(--text-mid)", whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.55, background: "var(--bg-0)", border: "1px solid var(--border)", borderRadius: 10, maxHeight: 260, overflowY: "auto" }}>
+            {snippet}
+          </pre>
+          <button
+            className="btn btn-sm"
+            style={{ position: "absolute", top: 9, right: 9, background: "var(--bg-2)", border: "1px solid var(--border)", color: copied ? "var(--green-400)" : "var(--text-hi)" }}
+            onClick={() => {
+              try {
+                navigator.clipboard.writeText(snippet);
+              } catch {}
+              setCopied(true);
+              setTimeout(() => setCopied(false), 1500);
+            }}
+          >
+            {copied ? <Ic.check s={14} /> : <Ic.copy s={14} />} {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SectionLabel({ n, t, sub }: { n: string; t: string; sub?: string }) {
   return (
     <div>
@@ -396,6 +469,9 @@ export function ReceiptDoc({ data }: { data: Receipt }) {
 
       {/* fix prompt (fail only) */}
       <FixPrompt receipt={data} />
+
+      {/* upgrade-to-Action panel (partial only) */}
+      <UpgradePanel receipt={data} />
 
       {/* actions */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 9, marginTop: 16, alignItems: "center" }}>
