@@ -1,0 +1,15 @@
+diff --git a/src/math.ts b/src/math.ts
+index 4444444..5555555 100644
+--- a/src/math.ts
++++ b/src/math.ts
+@@ -1 +1,2 @@
+ export const sum = (a: number, b: number) => a + b;
++export const mul = (a: number, b: number) => a * b;
+diff --git a/src/math.test.ts b/src/math.test.ts
+index 6666666..7777777 100644
+--- a/src/math.test.ts
++++ b/src/math.test.ts
+@@ -1,2 +1,4 @@
+ import { sum, mul } from "./math";
+ test("sum", () => expect(sum(1, 2)).toBe(3));
++test("mul", () => expect(mul(2, 3)).toBe(6));
