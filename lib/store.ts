@@ -19,7 +19,12 @@ if (!useKv && process.env.NODE_ENV === "production") {
   );
 }
 
-const memory = new Map<string, Receipt>();
+// Pin the fallback map to globalThis so every route bundle in the same Node
+// process shares ONE store. Without this, Next bundles each route separately,
+// so a receipt written by /api/scan is invisible to the /r/[id] page (404).
+// This makes paste→view work locally with zero config; prod still uses KV.
+const g = globalThis as typeof globalThis & { __ccReceipts?: Map<string, Receipt> };
+const memory: Map<string, Receipt> = (g.__ccReceipts ??= new Map());
 
 /** Restrict ids to a safe key charset before they touch the KV namespace. */
 function key(id: string): string {

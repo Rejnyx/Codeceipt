@@ -41,8 +41,8 @@ next-env.d.ts
 # Testing
 coverage/
 
-# Claude Code (personal/machine-local settings)
-.claude/settings.local.json
+# Claude Code (personal / machine-local)
+.claude/
 
 # Misc
 .cache/
